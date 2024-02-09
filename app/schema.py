@@ -1,20 +1,8 @@
 import strawberry
-from typing import Optional
+from typing import Optional, List
 from strawberry.fastapi import GraphQLRouter
 
-
-def create_app(idade: int, nome: str):
-    person = Person(nome=nome, idade=idade)
-
-    with Session(engine) as session:
-        session.add(person)
-        session.commit()
-        session.refresh(person)
-
-    return person
-
-
-""""""
+from .db_function import create_pessoas, create_livros, get_pessoas, get_livros
 
 
 @strawberry.type
@@ -22,25 +10,26 @@ class Pessoa:
     id: Optional[int]
     nome: str
     idade: int
+    livros: List['Livro']
 
 
-""""""
+@strawberry.type
+class Livro:
+    id: Optional[int]
+    titulo: str
+    pessoa: Pessoa
 
 
 @strawberry.type
 class Query:
-
-    @strawberry.field
-    def all_pessoa(self) -> list[Pessoa]:
-        query = select(Person)
-        with Session(engine) as session:
-            result = session.execute(query).scalars().all()
-        return result
+    all_pessoas: List[Pessoa] = strawberry.field(resolver=get_pessoas)
+    all_livro: List[Livro] = strawberry.field(resolver=get_livros)
 
 
 @strawberry.type
 class Mutation:
-    create_pessoa: Pessoa = strawberry.field(resolver=create_app)
+    create_pessoa: Pessoa = strawberry.field(resolver=create_pessoas)
+    create_livro: Livro = strawberry.field(resolver=create_livros)
 
 
 schema = strawberry.Schema(
